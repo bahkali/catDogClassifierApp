@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:tflite/tflite.dart';
+import 'package:image_picker/image_picker.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -8,6 +10,61 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   bool _loading = true;
+  File _image;
+  List _output;
+  final picker = ImagePicker();
+
+  @override
+  void initState(){
+    super.initState();
+    loadModel().then((value){
+      setState((){
+
+      });
+    });
+  }
+
+  detectImage(File image) async {
+    var output = await Tflite.runModelOnImage(
+      path: image.path,
+      numResults: 2,
+      threshold: 0.6,
+      imageMean: 127.5,
+      imageStd: 127.5
+    );
+    setState(() {
+      _output = output;
+      _loading = false;
+    });
+  }
+  loadModel() async {
+    await Tflite.loadModel(model: 'assets/', labels: 'assets/');
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
+
+  pickImage()async{
+    var image = await picker.getImage(source: ImageSource.camera)
+        if (image == null) return null;
+        setState(() {
+           _image = File(image.path);
+        });
+        detectImage(_image);
+  }
+
+  pickGalleryImage()async{
+    var image = await picker.getImage(source: ImageSource.gallery)
+    if (image == null) return null;
+    setState(() {
+      _image = File(image.path);
+    });
+    detectImage(_image);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
